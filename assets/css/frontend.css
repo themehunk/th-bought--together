@@ -1,0 +1,17 @@
+section.thwbt-wrapper .thwbt-content{
+display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+    -webkit-box-align: start;
+    -ms-flex-align: start;
+    align-items: flex-start;
+}
+
+section.thwbt-wrapper .thwbt-content .thwbt-content-one{
+width:66%;
+}
+section.thwbt-wrapper .thwbt-content .thwbt-content-two{
+width:34%;
+}
