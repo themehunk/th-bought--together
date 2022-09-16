@@ -11,7 +11,19 @@ display: -webkit-box;
 
 section.thwbt-wrapper .thwbt-content .thwbt-content-one{
 width:66%;
+display: inline-flex;
+padding: 1rem 0;
 }
 section.thwbt-wrapper .thwbt-content .thwbt-content-two{
 width:34%;
+padding: 1rem 0;
+}
+
+section.thwbt-wrapper .thwbt-content .thwbt-content-one > div {
+padding: 0 0.5rem;
+
+}
+
+.thwbt-product-list{
+padding: 0 2rem;   
 }

@@ -28,6 +28,8 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
         add_shortcode('thwbt', array( $this, 'thwbt_shortcode' ) );
 
+        add_filter( 'display_post_states', array($this, 'thwbt_display_post_states'), 10, 2 );
+
         // Enqueue backend scripts
 		add_action( 'admin_enqueue_scripts', array( $this, 'thwbt_admin_enqueue_scripts' ) );
 
@@ -161,6 +163,22 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
 	    }
 
+	    public function thwbt_display_post_states( $states, $post ) {
+		
+		 $items = get_post_meta($post->ID, '_thwbt_product_ids', true );
+
+ 		 if ( ! empty( $items ) ) {
+
+								$count    = count( $items );
+								$states[] = esc_html__('TH Bought Together','th-bought-together') . '(' .esc_html($count). ')';
+
+								
+			}	
+
+	     return $states;
+
+		}
+
 	    public function thwbt_show_items($product_id = null, $location = false){
 
 	    	if ( ! $product_id ) {
@@ -170,7 +188,8 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 					
 					if ( $product ) {
 
-							$product_id = $product->get_id();
+						$product_id = $product->get_id();
+
 						}
 
 					} else {
@@ -190,7 +209,8 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
                         return;
 					}
 
-					
+					array_unshift($data_items,$product_id);
+		
             ?>
 
             <section class="thwbt-wrapper">
@@ -213,11 +233,13 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
 						<div <?php wc_product_class( 'thwbt-product', $item );?>>
 
-							<div class="image"><?php echo $item_product->get_image(); ?></div>
+							<div class="image"><?php echo wp_kses_post($item_product->get_image()); ?></div>
 							
-							<h4><a href="<?php echo esc_url($item_product->get_permalink());?>"><?php echo $item_product->get_name();?></a></h4>
+							<h4>
+								<a href="<?php echo esc_url($item_product->get_permalink());?>"><?php echo esc_html($item_product->get_name());?></a>
+							</h4>
 	            			<?php
-	            			echo $item_product->get_price_html();
+	            			echo wp_kses_post($item_product->get_price_html());
 	            			?>
 	            		
 						</div>
@@ -227,7 +249,39 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 	            	</div>
 
 	            	<div class="thwbt-content-two">
-	            		left
+
+	            	<div class="thwbt-product-list">
+
+                      <?php foreach ( $data_items as $item ) {
+
+                      $item_product = wc_get_product( $item );
+
+
+
+					  if ( ! $item_product || ( ( ! $item_product->is_purchasable() || ! $item_product->is_in_stock() ) ) ) {
+
+							continue;
+
+						} ?>
+
+	            		<div class="thwbt-product-list-add">
+	            			
+	            			<label>
+	            				<input name="product-checkbox[<?php echo esc_attr($item_product->get_id());?>]" type="checkbox" class="product-checkbox" data-price="<?php echo esc_attr($item_product->get_price());?>" data-product-id="<?php echo esc_attr($item_product->get_id());?>" data-product-type="<?php echo esc_attr($item_product->get_type());?>" data-product-quantity="1" <?php if($product_id === $item_product->get_id()) echo esc_attr('checked') .esc_attr(' disabled');?>>
+								    <span>
+									<?php echo esc_html($item_product->get_name());?>
+									</span>
+									<?php
+	            			        echo wp_kses_post($item_product->get_price_html());
+	            			         ?>
+							</label>
+
+	            		</div>
+
+	            	   <?php } ?>
+
+	            		</div>
+
 	            	</div>
 	                
 	            </div>
