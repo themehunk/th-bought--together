@@ -308,10 +308,10 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
 	    	wp_enqueue_style( 'thwbt-frontend-css', THWBT_PLUGIN_URI . 'assets/css/frontend.css', array(), THWBT_VERSION );
 
-	    	
+	    	wp_enqueue_script( 'thwbt-frontend-js', THWBT_PLUGIN_URI . 'assets/js/frontend.js', array(
+						'jquery'), THWBT_VERSION, true );
 
 	    }
-
 
     }
 
