@@ -217,11 +217,29 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
             	<h2><?php _e('frequently brougt together','th-bought-together');?></h2>
 
-	            <div class="thwbt-content">
+	            <div class="thwbt-content thwbt-product-wrap" data-id="<?php echo esc_attr($product_id);?>" data-thwbt-order="0">
 	            	
 	            	<div class="thwbt-content-one">
 
-	            	<?php foreach ( $data_items as $item ) {
+	            	<?php 
+
+	            	$count = 0;
+
+	            	foreach ( $data_items as $item ) {
+
+	                  if($count==0){
+
+                       $thwbt_class ='thwbt-product thwbt-active';
+
+                       
+
+	                  }else{
+
+	                  	$thwbt_class='thwbt-product thwbt-inactive';
+
+	                  	
+
+	                  }
 
                       $item_product = wc_get_product( $item );
 
@@ -231,7 +249,7 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
 						} ?>
 
-						<div <?php wc_product_class( 'thwbt-product', $item );?>>
+						<div <?php wc_product_class($thwbt_class, $item );?>>
 
 							<div class="image"><?php echo wp_kses_post($item_product->get_image()); ?></div>
 							
@@ -244,11 +262,15 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 	            		
 						</div>
 
-					   <?php } ?>
+					   <?php 
+
+					   $count++;
+
+					   } ?>
 	            		
 	            	</div>
 
-	            	<div class="thwbt-content-two">
+	            	<div class="thwbt-content-two thwbt-products">
 
 	            	<div class="thwbt-product-list">
 

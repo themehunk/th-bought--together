@@ -13,6 +13,7 @@ section.thwbt-wrapper .thwbt-content .thwbt-content-one{
 width:66%;
 display: inline-flex;
 padding: 1rem 0;
+flex-wrap: wrap;
 }
 section.thwbt-wrapper .thwbt-content .thwbt-content-two{
 width:34%;
@@ -20,10 +21,49 @@ padding: 1rem 0;
 }
 
 section.thwbt-wrapper .thwbt-content .thwbt-content-one > div {
-padding: 0 0.5rem;
+padding: 0.5rem;
+width: 33.33%;
 
 }
 
 .thwbt-product-list{
-padding: 0 2rem;   
+padding: 0.5rem 2rem; 
+}
+
+.thwbt-product.thwbt-inactive{
+opacity:0.5;
+}
+
+.thwbt-product.thwbt-inactive .image{
+position:relative;
+}
+
+.thwbt-product.thwbt-inactive .image:after{
+    content:'+';
+    position: absolute;
+    padding: 0;
+    left: 0;
+    right: 0;
+    top: 45%;
+    font-size:22px;
+    text-align:center;
+}
+.thwbt-product h4{
+margin-bottom:0.2rem;
+font-size:0.87rem;
+line-height:1.2;
+}
+
+.thwbt-product .image{
+margin-bottom:0.7rem;
+}
+.thwbt-product-list-add label{
+    font-size: 0.89rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.thwbt-product-list-add label input[type=checkbox]{
+    margin-right:5px ;
+    line-height: normal;
 }
