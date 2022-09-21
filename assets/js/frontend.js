@@ -51,7 +51,7 @@
         var $match_id = $this.closest('.thwbt-product-wrap').find('.thwbt-content-one');
 			        
 			     if (!_checked) {
-			     	
+
 			      if ($match_id.length) {
 			        $match_id.find('.post-' + _id).
 			            addClass('thwbt-inactive');
@@ -63,11 +63,10 @@
 			        $match_id.find('.post-' + _id).
 			            removeClass('thwbt-inactive');
 			      }
+
 			    }
 
-				});
-          
-
+				});     
 
       });
 

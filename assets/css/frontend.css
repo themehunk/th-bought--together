@@ -67,3 +67,22 @@ margin-bottom:0.7rem;
     margin-right:5px ;
     line-height: normal;
 }
+.thwbt-products .total-price-wrapper{
+
+ margin:1.5rem 0;
+
+}
+
+.thwbt-products .total-price-wrapper .total-price{
+font-size:1.3rem;
+margin-bottom:0.5rem;
+}
+
+.thwbt-products .total-price-wrapper .total-order{
+font-size:0.89rem;
+margin-bottom:0.5rem;
+}
+.thwbt-add-button-form button.thwbt-add-button{
+margin:0.5rem 0;
+letter-spacing:0.7px;
+}

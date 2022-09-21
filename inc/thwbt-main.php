@@ -278,8 +278,6 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
                       $item_product = wc_get_product( $item );
 
-
-
 					  if ( ! $item_product || ( ( ! $item_product->is_purchasable() || ! $item_product->is_in_stock() ) ) ) {
 
 							continue;
@@ -302,6 +300,8 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
 	            	   <?php } ?>
 
+	            	   <?php $this->thwbt_total_wrap($product_id);?>
+
 	            		</div>
 
 	            	</div>
@@ -311,7 +311,45 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
             <?php 
 
-	    }			
+	    }		
+
+	    public function thwbt_total_wrap($pid){ 
+            
+            $product = wc_get_product($pid);
+
+	    	?>
+
+	    	<div class="total-price-wrapper" data-total="<?php echo esc_attr($product->get_price());?>">
+
+	    		<div class="total-price">
+	    			<?php
+	            	echo wp_kses_post($product->get_price_html());
+	            	?>	
+	            </div>
+
+	    		<div class="total-order"><?php echo sprintf(__('For %s item.','th-bought-together'),'1');?></div>
+    
+                  <?php $this->thwbt_add_button($product); ?>
+
+	    	</div>
+
+
+	    <?php }	
+
+	    public function thwbt_add_button($product){ ?> 
+
+                <div class="thwbt-add-button-form">
+
+                <input type="hidden" name="thwbt_ids" class="thwbt-ids thwbt-ids-<?php echo esc_attr( $product->get_id() );?>" data-id="<?php echo esc_attr( $product->get_id() );?>"/>
+
+                <input type="hidden" name="quantity" value="1"/>
+
+                <input type="hidden" name="product_id" value="<?php echo esc_attr( $product->get_id() );?>">
+
+	    		<button type="submit" class="single_add_to_cart_button button alt thwbt-add-button"><?php echo esc_html__('Add all to cart','th-bought-together');?></button>
+	    	    </div>
+
+	    <?php }
 
 
 	    public function thwbt_admin_enqueue_scripts(){
