@@ -39,6 +39,11 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
 		//show 
         add_action( 'woocommerce_after_single_product_summary', array( $this, 'thwbt_show_shortcode' ) );
+
+        //added product to cart
+        add_action( 'wp_ajax_thwbt_add_all_to_cart',array( $this, 'thwbt_add_all_to_cart' ) );
+		add_action( 'wp_ajax_nopriv_thwbt_add_all_to_cart', array( $this, 'thwbt_add_all_to_cart' ) );
+
         }
 
         public function thwbt_new_product_tab( $tabs ) {
@@ -287,7 +292,7 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 	            		<div class="thwbt-product-list-add">
 	            			
 	            			<label>
-	            				<input name="product-checkbox[<?php echo esc_attr($item_product->get_id());?>]" value="<?php echo esc_attr($item_product->get_price());?>"type="checkbox" class="product-checkbox" data-price="<?php echo esc_attr($item_product->get_price());?>" data-product-id="<?php echo esc_attr($item_product->get_id());?>" data-product-type="<?php echo esc_attr($item_product->get_type());?>" data-product-quantity="1" <?php if($product_id === $item_product->get_id()) echo esc_attr('checked') .esc_attr(' disabled');?>>
+	            				<input id="<?php echo esc_attr($item_product->get_id());?>" name="product-checkbox[<?php echo esc_attr($item_product->get_id());?>]" value="<?php echo esc_attr($item_product->get_price());?>"type="checkbox" class="product-checkbox" data-price="<?php echo esc_attr($item_product->get_price());?>" data-product-id="<?php echo esc_attr($item_product->get_id());?>" data-product-type="<?php echo esc_attr($item_product->get_type());?>" data-product-quantity="1" <?php if($product_id === $item_product->get_id()) echo esc_attr('checked') .esc_attr(' disabled');?>>
 								    <span>
 									<?php echo esc_html($item_product->get_name());?>
 									</span>
@@ -323,11 +328,11 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
 	    		<div class="total-price">
 	    			<?php
-	            	echo wp_kses_post($product->get_price_html());
+	            	echo wp_kses_post($product->get_price_html()); 
 	            	?>	
 	            </div>
 
-	    		<div class="total-order"><?php echo sprintf(__('For %s item.','th-bought-together'),'1');?></div>
+	    		<div class="total-order"><?php echo sprintf(__('For <span>%s</span> item.','th-bought-together'),'1');?></div>
     
                   <?php $this->thwbt_add_button($product); ?>
 
@@ -352,6 +357,54 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 	    <?php }
 
 
+	    public function thwbt_add_all_to_cart() {
+
+         if ( ! isset( $_POST['product_id'] ) ) {
+
+			return;
+
+		}
+
+		check_ajax_referer( 'thwbt-addto-cart', 'thwbt_nonce' );
+
+		$product_id     = (int) apply_filters( 'woocommerce_add_to_cart_product_id', absint( $_POST['product_id'] ) );
+
+		$passed_validation = apply_filters('woocommerce_add_to_cart_validation', true, $product_id, 1);
+
+		$product        = wc_get_product( $product_id );
+
+		$quantity       = empty( $_POST['quantity'] ) ? 1 : wc_stock_amount( wp_unslash( $_POST['quantity'] ) );
+
+        if($passed_validation && WC()->cart->add_to_cart($product_id, $quantity)){
+
+          $data = apply_filters('add_to_cart_fragments', array());
+
+          do_action( 'woocommerce_ajax_added_to_cart', $product_id );
+
+          if ( 'yes' === get_option( 'woocommerce_cart_redirect_after_add' ) ) {
+
+			wc_add_to_cart_message( array( $product_id => $quantity ), true );
+
+			}
+
+			WC_AJAX::get_refreshed_fragments();
+
+        }else {
+						$data = array(
+							'error'       => true,
+							'product_url' => apply_filters( 'woocommerce_cart_redirect_after_error', get_permalink( $product_id ), $product_id ),
+						);
+
+						wp_send_json( $data );
+		}
+		
+        echo json_encode( $data );
+
+		die();			
+
+	    }
+
+
 	    public function thwbt_admin_enqueue_scripts(){
 
 	    	wp_enqueue_style( 'thwbt-backend-css', THWBT_PLUGIN_URI . 'assets/css/backend.css', array(), THWBT_VERSION );
@@ -370,6 +423,14 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
 	    	wp_enqueue_script( 'thwbt-frontend-js', THWBT_PLUGIN_URI . 'assets/js/frontend.js', array(
 						'jquery'), THWBT_VERSION, true );
+
+	    	wp_localize_script( 'thwbt-frontend-js', 'thwbt_optn', 
+	    		            array(
+							      'ajax_url'                 => admin_url( 'admin-ajax.php' ),
+							      'currency_symbol'          => get_woocommerce_currency_symbol(),
+							      'nonce'          => wp_create_nonce( "thwbt-addto-cart" ),
+						          )
+	                           );
 
 	    }
 

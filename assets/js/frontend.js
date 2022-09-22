@@ -27,6 +27,7 @@
 		{
 
          $( document ).on('click' , '.product-checkbox', ThwbtScript._thwbt_init );
+         $( document ).on('click' , '.thwbt-add-button-form .single_add_to_cart_button', ThwbtScript._add_to_cart_item );
 			
 		},
 
@@ -105,8 +106,10 @@
          $products.find('.thwbt-product-list-add').each(function() {
 
          	var $this = $(this);
-
             var _total = 0;
+            var _count = 0;
+            var _id = [];
+
 
             var table_abc = document.getElementsByClassName("product-checkbox");
 
@@ -114,19 +117,77 @@
 
 		        if (table_abc[i].checked) {
 
-		            var value = table_abc[i].value;
-
 		            _total += parseFloat(table_abc[i].value);
+
+		             _id.push(parseInt(table_abc[i].id));
+
+		            _count++;
 
 		        }
 		    }
 
-		    $('.total-price').html(_total); 
+		    $('.total-price').html(thwbt_optn.currency_symbol + _total);
+
+		    $('.total-order span').html(_count);
+
+		    $(".thwbt-ids").attr("value",_id);
 
          });
 
 
-		}
+		},
+        
+       /************************/
+      // Add to cart Item
+      /************************/
+
+       _add_to_cart_item : function( event ) {
+          
+          event.preventDefault();
+
+          var $btn = $(this);
+
+          var $form = $btn.closest('.thwbt-add-button-form');
+          var $wrap = $btn.closest('.thwbt-product-wrap');
+
+         // variable product
+
+         var data = {};
+         var attrs = {};
+
+         $btn.addClass('loading');
+
+         data.action = 'thwbt_add_all_to_cart';
+         data.quantity = $form.find('input[name="quantity"]').val();
+         data.product_id = $form.find('input[name="product_id"]').val();
+         data.thwbt_ids = $form.find('input[name="thwbt_ids"]').val();
+         data.thwbt_nonce = thwbt_optn.nonce;
+
+
+          $.post(thwbt_optn.ajax_url, data, function(response) {
+          if (!response) {
+            return;
+          }
+
+          if (response.error && response.product_url) {
+            window.location = response.product_url;
+            return;
+          }
+
+          if ((typeof wc_add_to_cart_params !== 'undefined') &&
+              (wc_add_to_cart_params.cart_redirect_after_add === 'yes')) {
+            window.location = wc_add_to_cart_params.cart_url;
+            return;
+          }
+
+          $btn.removeClass('loading');
+
+          $(document.body).
+              trigger('added_to_cart',
+                  [response.fragments, response.cart_hash, $btn]);
+        });
+             
+       }
 
 	};
 
