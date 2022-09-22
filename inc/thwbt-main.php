@@ -287,7 +287,7 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 	            		<div class="thwbt-product-list-add">
 	            			
 	            			<label>
-	            				<input name="product-checkbox[<?php echo esc_attr($item_product->get_id());?>]" type="checkbox" class="product-checkbox" data-price="<?php echo esc_attr($item_product->get_price());?>" data-product-id="<?php echo esc_attr($item_product->get_id());?>" data-product-type="<?php echo esc_attr($item_product->get_type());?>" data-product-quantity="1" <?php if($product_id === $item_product->get_id()) echo esc_attr('checked') .esc_attr(' disabled');?>>
+	            				<input name="product-checkbox[<?php echo esc_attr($item_product->get_id());?>]" value="<?php echo esc_attr($item_product->get_price());?>"type="checkbox" class="product-checkbox" data-price="<?php echo esc_attr($item_product->get_price());?>" data-product-id="<?php echo esc_attr($item_product->get_id());?>" data-product-type="<?php echo esc_attr($item_product->get_type());?>" data-product-quantity="1" <?php if($product_id === $item_product->get_id()) echo esc_attr('checked') .esc_attr(' disabled');?>>
 								    <span>
 									<?php echo esc_html($item_product->get_name());?>
 									</span>

@@ -26,17 +26,32 @@
 		_bind: function()
 		{
 
-    $( document ).on('click' , '.product-checkbox', ThwbtScript._checkvalue_used );
+         $( document ).on('click' , '.product-checkbox', ThwbtScript._thwbt_init );
 			
 		},
 
-		/*************/
-    // checkbox value save it
-     /*************/
+       /*************/
+      // Main Init
+      /*************/
+		_thwbt_init : function( event ) {
 
-		_checkvalue_used : function( event ) {
+            $('.thwbt-product-wrap').each(function() {	
 
-			$('.thwbt-product-wrap').each(function() {
+            ThwbtScript._checkvalue_used($(this));
+
+            ThwbtScript._calculate_total_price($(this));
+
+            });
+
+		},
+
+	  /************************/
+      // checkbox value save it
+      /************************/
+
+		_checkvalue_used : function( $wrap ) {
+
+			$wrap.each(function() {
 
 				var $products = $(this).find('.thwbt-products');
 
@@ -48,9 +63,10 @@
 
 				var _id = parseInt($this.find('.product-checkbox').attr('data-product-id'));
         
-        var $match_id = $this.closest('.thwbt-product-wrap').find('.thwbt-content-one');
-			        
-			     if (!_checked) {
+                var $match_id = $this.closest($wrap).find('.thwbt-content-one');
+			      
+
+			    if (!_checked) {
 
 			      if ($match_id.length) {
 			        $match_id.find('.post-' + _id).
@@ -66,14 +82,52 @@
 
 			    }
 
-				});     
+			    
+			}); 
 
-      });
+
+          });
+
+
+		},
+
+       /************************/
+      // Calculate Total Price
+      /************************/
+
+		_calculate_total_price : function( $wrap ) {
+
+         var $products     = $wrap.find('.thwbt-product-list');
+
+         var $product_this = $products.find('.product-checkbox');
+
+
+         $products.find('.thwbt-product-list-add').each(function() {
+
+         	var $this = $(this);
+
+            var _total = 0;
+
+            var table_abc = document.getElementsByClassName("product-checkbox");
+
+            for (var i = 0; table_abc[i]; ++i) {
+
+		        if (table_abc[i].checked) {
+
+		            var value = table_abc[i].value;
+
+		            _total += parseFloat(table_abc[i].value);
+
+		        }
+		    }
+
+		    $('.total-price').html(_total); 
+
+         });
 
 
 		}
 
-		
 	};
 
 	/**
