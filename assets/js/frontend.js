@@ -105,7 +105,7 @@
 
          $products.find('.thwbt-product-list-add').each(function() {
 
-         	var $this = $(this);
+          	var $this = $(this);
             var _total = 0;
             var _count = 0;
             var _id = [];
@@ -132,7 +132,7 @@
 
 		    $(".thwbt-ids").attr("value",_id);
 
-         });
+        });
 
 
 		},
@@ -158,13 +158,18 @@
          $btn.addClass('loading');
 
          data.action = 'thwbt_add_all_to_cart';
+
          data.quantity = $form.find('input[name="quantity"]').val();
+
          data.product_id = $form.find('input[name="product_id"]').val();
+
          data.thwbt_ids = $form.find('input[name="thwbt_ids"]').val();
+
          data.thwbt_nonce = thwbt_optn.nonce;
 
+         $.post(thwbt_optn.ajax_url, data, function(response) {
 
-          $.post(thwbt_optn.ajax_url, data, function(response) {
+
           if (!response) {
             return;
           }

@@ -345,13 +345,13 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
                 <div class="thwbt-add-button-form">
 
-                <input type="hidden" name="thwbt_ids" class="thwbt-ids thwbt-ids-<?php echo esc_attr( $product->get_id() );?>" data-id="<?php echo esc_attr( $product->get_id() );?>"/>
+                <input type="hidden" name="thwbt_ids" class="thwbt-ids thwbt-ids-<?php echo esc_attr( $product->get_id() );?>" data-id="<?php echo esc_attr( $product->get_id() );?>" />
 
                 <input type="hidden" name="quantity" value="1"/>
 
                 <input type="hidden" name="product_id" value="<?php echo esc_attr( $product->get_id() );?>">
 
-	    		<button type="submit" class="single_add_to_cart_button button alt thwbt-add-button"><?php echo esc_html__('Add all to cart','th-bought-together');?></button>
+	    		<button type="submit" name="add-to-cart" value="<?php echo esc_attr( $product->get_id() );?>"  class="single_add_to_cart_button button alt thwbt-add-button"><?php echo esc_html__('Add all to cart','th-bought-together');?></button>
 	    	    </div>
 
 	    <?php }
@@ -359,21 +359,72 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
 	    public function thwbt_add_all_to_cart() {
 
-         if ( ! isset( $_POST['product_id'] ) ) {
 
-			return;
+		if ( ! isset( $_POST['product_id'] ) ) {
 
-		}
+            return;
+
+        }
 
 		check_ajax_referer( 'thwbt-addto-cart', 'thwbt_nonce' );
 
-		$product_id     = (int) apply_filters( 'woocommerce_add_to_cart_product_id', absint( $_POST['product_id'] ) );
+		
+		if(!empty($_POST['thwbt_ids'])){	
 
-		$passed_validation = apply_filters('woocommerce_add_to_cart_validation', true, $product_id, 1);
+		if ( ! class_exists( 'WC_Form_Handler' ) || empty( $_REQUEST['thwbt_ids'] ) || false === strpos( $_REQUEST['thwbt_ids'], ',' ) ) {
+		    return;
+		}	
 
-		$product        = wc_get_product( $product_id );
+		remove_action( 'wp_loaded', array( 'WC_Form_Handler', 'add_to_cart_action' ), 20 );
+
+        $product_ids = explode( ',', $_REQUEST['thwbt_ids'] );
+
+		$count       = count( $product_ids );
+
+		$number      = 0;
 
 		$quantity       = empty( $_POST['quantity'] ) ? 1 : wc_stock_amount( wp_unslash( $_POST['quantity'] ) );
+
+		foreach ( $product_ids as $product_id ) {
+		    
+		    $product_id        = apply_filters( 'woocommerce_add_to_cart_product_id', absint( $product_id ) );
+		    $was_added_to_cart = false;
+		    $adding_to_cart    = wc_get_product( $product_id );
+
+		    if ( ! $adding_to_cart ) {
+		        continue;
+		    }
+
+		    $add_to_cart_handler = apply_filters( 'woocommerce_add_to_cart_handler', $adding_to_cart->product_type, $adding_to_cart );
+
+		 
+		    if ( 'simple' !== $add_to_cart_handler ) {
+
+		        continue;
+		    }
+
+		    $passed_validation = apply_filters( 'woocommerce_add_to_cart_validation', true, $product_id, $quantity );
+
+		    if ( $passed_validation && false !== WC()->cart->add_to_cart( $product_id, $quantity ) ) {
+
+		    	do_action( 'woocommerce_ajax_added_to_cart', $product_id );
+
+		        wc_add_to_cart_message( array( $product_id => $quantity ), true );
+		       
+		        }
+
+		    }
+
+		}else{
+
+
+		$product_id     = (int) apply_filters( 'woocommerce_add_to_cart_product_id', absint( $_POST['product_id'] ) );
+
+        $passed_validation = apply_filters('woocommerce_add_to_cart_validation', true, $product_id, 1);
+
+        $product        = wc_get_product( $product_id );
+
+        $quantity       = empty( $_POST['quantity'] ) ? 1 : wc_stock_amount( wp_unslash( $_POST['quantity'] ) );
 
         if($passed_validation && WC()->cart->add_to_cart($product_id, $quantity)){
 
@@ -383,27 +434,21 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
           if ( 'yes' === get_option( 'woocommerce_cart_redirect_after_add' ) ) {
 
-			wc_add_to_cart_message( array( $product_id => $quantity ), true );
+            wc_add_to_cart_message( array( $product_id => $quantity ), true );
 
-			}
+                 }
 
-			WC_AJAX::get_refreshed_fragments();
 
-        }else {
-						$data = array(
-							'error'       => true,
-							'product_url' => apply_filters( 'woocommerce_cart_redirect_after_error', get_permalink( $product_id ), $product_id ),
-						);
+            }
 
-						wp_send_json( $data );
 		}
-		
-        echo json_encode( $data );
+
+		WC_AJAX::get_refreshed_fragments();
 
 		die();			
 
-	    }
-
+	    
+	   }
 
 	    public function thwbt_admin_enqueue_scripts(){
 
