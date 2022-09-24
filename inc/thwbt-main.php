@@ -28,6 +28,8 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
         add_shortcode('thwbt', array( $this, 'thwbt_shortcode' ) );
 
+        add_filter( 'display_post_states', array($this, 'thwbt_display_post_states'), 10, 2 );
+
         // Enqueue backend scripts
 		add_action( 'admin_enqueue_scripts', array( $this, 'thwbt_admin_enqueue_scripts' ) );
 
@@ -37,6 +39,11 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
 		//show 
         add_action( 'woocommerce_after_single_product_summary', array( $this, 'thwbt_show_shortcode' ) );
+
+        //added product to cart
+        add_action( 'wp_ajax_thwbt_add_all_to_cart',array( $this, 'thwbt_add_all_to_cart' ) );
+		add_action( 'wp_ajax_nopriv_thwbt_add_all_to_cart', array( $this, 'thwbt_add_all_to_cart' ) );
+
         }
 
         public function thwbt_new_product_tab( $tabs ) {
@@ -161,6 +168,22 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
 	    }
 
+	    public function thwbt_display_post_states( $states, $post ) {
+		
+		 $items = get_post_meta($post->ID, '_thwbt_product_ids', true );
+
+ 		 if ( ! empty( $items ) ) {
+
+								$count    = count( $items );
+								$states[] = esc_html__('TH Bought Together','th-bought-together') . '(' .esc_html($count). ')';
+
+								
+			}	
+
+	     return $states;
+
+		}
+
 	    public function thwbt_show_items($product_id = null, $location = false){
 
 	    	if ( ! $product_id ) {
@@ -170,7 +193,8 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 					
 					if ( $product ) {
 
-							$product_id = $product->get_id();
+						$product_id = $product->get_id();
+
 						}
 
 					} else {
@@ -190,18 +214,37 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
                         return;
 					}
 
-					
+					array_unshift($data_items,$product_id);
+		
             ?>
 
             <section class="thwbt-wrapper">
 
             	<h2><?php _e('frequently brougt together','th-bought-together');?></h2>
 
-	            <div class="thwbt-content">
+	            <div class="thwbt-content thwbt-product-wrap" data-id="<?php echo esc_attr($product_id);?>" data-thwbt-order="0">
 	            	
 	            	<div class="thwbt-content-one">
 
-	            	<?php foreach ( $data_items as $item ) {
+	            	<?php 
+
+	            	$count = 0;
+
+	            	foreach ( $data_items as $item ) {
+
+	                  if($count==0){
+
+                       $thwbt_class ='thwbt-product thwbt-active';
+
+                       
+
+	                  }else{
+
+	                  	$thwbt_class='thwbt-product thwbt-inactive';
+
+	                  	
+
+	                  }
 
                       $item_product = wc_get_product( $item );
 
@@ -211,23 +254,61 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
 						} ?>
 
-						<div <?php wc_product_class( 'thwbt-product', $item );?>>
+						<div <?php wc_product_class($thwbt_class, $item );?>>
 
-							<div class="image"><?php echo $item_product->get_image(); ?></div>
+							<div class="image"><?php echo wp_kses_post($item_product->get_image()); ?></div>
 							
-							<h4><a href="<?php echo esc_url($item_product->get_permalink());?>"><?php echo $item_product->get_name();?></a></h4>
+							<h4>
+								<a href="<?php echo esc_url($item_product->get_permalink());?>"><?php echo esc_html($item_product->get_name());?></a>
+							</h4>
 	            			<?php
-	            			echo $item_product->get_price_html();
+	            			echo wp_kses_post($item_product->get_price_html());
 	            			?>
 	            		
 						</div>
 
-					   <?php } ?>
+					   <?php 
+
+					   $count++;
+
+					   } ?>
 	            		
 	            	</div>
 
-	            	<div class="thwbt-content-two">
-	            		left
+	            	<div class="thwbt-content-two thwbt-products">
+
+	            	<div class="thwbt-product-list">
+
+                      <?php foreach ( $data_items as $item ) {
+
+                      $item_product = wc_get_product( $item );
+
+					  if ( ! $item_product || ( ( ! $item_product->is_purchasable() || ! $item_product->is_in_stock() ) ) ) {
+
+							continue;
+
+						} ?>
+
+	            		<div class="thwbt-product-list-add">
+	            			
+	            			<label>
+	            				<input id="<?php echo esc_attr($item_product->get_id());?>" name="product-checkbox[<?php echo esc_attr($item_product->get_id());?>]" value="<?php echo esc_attr($item_product->get_price());?>"type="checkbox" class="product-checkbox" data-price="<?php echo esc_attr($item_product->get_price());?>" data-product-id="<?php echo esc_attr($item_product->get_id());?>" data-product-type="<?php echo esc_attr($item_product->get_type());?>" data-product-quantity="1" <?php if($product_id === $item_product->get_id()) echo esc_attr('checked') .esc_attr(' disabled');?>>
+								    <span>
+									<?php echo esc_html($item_product->get_name());?>
+									</span>
+									<?php
+	            			        echo wp_kses_post($item_product->get_price_html());
+	            			         ?>
+							</label>
+
+	            		</div>
+
+	            	   <?php } ?>
+
+	            	   <?php $this->thwbt_total_wrap($product_id);?>
+
+	            		</div>
+
 	            	</div>
 	                
 	            </div>
@@ -235,8 +316,139 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
             <?php 
 
-	    }			
+	    }		
 
+	    public function thwbt_total_wrap($pid){ 
+            
+            $product = wc_get_product($pid);
+
+	    	?>
+
+	    	<div class="total-price-wrapper" data-total="<?php echo esc_attr($product->get_price());?>">
+
+	    		<div class="total-price">
+	    			<?php
+	            	echo wp_kses_post($product->get_price_html()); 
+	            	?>	
+	            </div>
+
+	    		<div class="total-order"><?php echo sprintf(__('For <span>%s</span> item.','th-bought-together'),'1');?></div>
+    
+                  <?php $this->thwbt_add_button($product); ?>
+
+	    	</div>
+
+
+	    <?php }	
+
+	    public function thwbt_add_button($product){ ?> 
+
+                <div class="thwbt-add-button-form">
+
+                <input type="hidden" name="thwbt_ids" class="thwbt-ids thwbt-ids-<?php echo esc_attr( $product->get_id() );?>" data-id="<?php echo esc_attr( $product->get_id() );?>" />
+
+                <input type="hidden" name="quantity" value="1"/>
+
+                <input type="hidden" name="product_id" value="<?php echo esc_attr( $product->get_id() );?>">
+
+	    		<button type="submit" name="add-to-cart" value="<?php echo esc_attr( $product->get_id() );?>"  class="single_add_to_cart_button button alt thwbt-add-button"><?php echo esc_html__('Add all to cart','th-bought-together');?></button>
+	    	    </div>
+
+	    <?php }
+
+
+	    public function thwbt_add_all_to_cart() {
+
+
+		if ( ! isset( $_POST['product_id'] ) ) {
+
+            return;
+
+        }
+
+		check_ajax_referer( 'thwbt-addto-cart', 'thwbt_nonce' );
+
+		
+		if(!empty($_POST['thwbt_ids'])){	
+
+		if ( ! class_exists( 'WC_Form_Handler' ) || empty( $_REQUEST['thwbt_ids'] ) || false === strpos( $_REQUEST['thwbt_ids'], ',' ) ) {
+		    return;
+		}	
+
+		remove_action( 'wp_loaded', array( 'WC_Form_Handler', 'add_to_cart_action' ), 20 );
+
+        $product_ids = explode( ',', $_REQUEST['thwbt_ids'] );
+
+		$count       = count( $product_ids );
+
+		$number      = 0;
+
+		$quantity       = empty( $_POST['quantity'] ) ? 1 : wc_stock_amount( wp_unslash( $_POST['quantity'] ) );
+
+		foreach ( $product_ids as $product_id ) {
+		    
+		    $product_id        = apply_filters( 'woocommerce_add_to_cart_product_id', absint( $product_id ) );
+		    $was_added_to_cart = false;
+		    $adding_to_cart    = wc_get_product( $product_id );
+
+		    if ( ! $adding_to_cart ) {
+		        continue;
+		    }
+
+		    $add_to_cart_handler = apply_filters( 'woocommerce_add_to_cart_handler', $adding_to_cart->product_type, $adding_to_cart );
+
+		 
+		    if ( 'simple' !== $add_to_cart_handler ) {
+
+		        continue;
+		    }
+
+		    $passed_validation = apply_filters( 'woocommerce_add_to_cart_validation', true, $product_id, $quantity );
+
+		    if ( $passed_validation && false !== WC()->cart->add_to_cart( $product_id, $quantity ) ) {
+
+		    	do_action( 'woocommerce_ajax_added_to_cart', $product_id );
+
+		        wc_add_to_cart_message( array( $product_id => $quantity ), true );
+		       
+		        }
+
+		    }
+
+		}else{
+
+
+		$product_id     = (int) apply_filters( 'woocommerce_add_to_cart_product_id', absint( $_POST['product_id'] ) );
+
+        $passed_validation = apply_filters('woocommerce_add_to_cart_validation', true, $product_id, 1);
+
+        $product        = wc_get_product( $product_id );
+
+        $quantity       = empty( $_POST['quantity'] ) ? 1 : wc_stock_amount( wp_unslash( $_POST['quantity'] ) );
+
+        if($passed_validation && WC()->cart->add_to_cart($product_id, $quantity)){
+
+          $data = apply_filters('add_to_cart_fragments', array());
+
+          do_action( 'woocommerce_ajax_added_to_cart', $product_id );
+
+          if ( 'yes' === get_option( 'woocommerce_cart_redirect_after_add' ) ) {
+
+            wc_add_to_cart_message( array( $product_id => $quantity ), true );
+
+                 }
+
+
+            }
+
+		}
+
+		WC_AJAX::get_refreshed_fragments();
+
+		die();			
+
+	    
+	   }
 
 	    public function thwbt_admin_enqueue_scripts(){
 
@@ -254,10 +466,18 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
 	    	wp_enqueue_style( 'thwbt-frontend-css', THWBT_PLUGIN_URI . 'assets/css/frontend.css', array(), THWBT_VERSION );
 
-	    	
+	    	wp_enqueue_script( 'thwbt-frontend-js', THWBT_PLUGIN_URI . 'assets/js/frontend.js', array(
+						'jquery'), THWBT_VERSION, true );
+
+	    	wp_localize_script( 'thwbt-frontend-js', 'thwbt_optn', 
+	    		            array(
+							      'ajax_url'                 => admin_url( 'admin-ajax.php' ),
+							      'currency_symbol'          => get_woocommerce_currency_symbol(),
+							      'nonce'          => wp_create_nonce( "thwbt-addto-cart" ),
+						          )
+	                           );
 
 	    }
-
 
     }
 
