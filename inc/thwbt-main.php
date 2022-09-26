@@ -7,6 +7,9 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
     	private static $instance;
 
+        private $type_status = '' ;
+
+
     	/**
          * Initiator
          */
@@ -99,8 +102,6 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
 	   public function thwbt_woocommerce_wp_product_select2( $field ) {
 
-		    global $post;
-
 		    $field['placeholder']   = isset( $field['placeholder'] ) ? $field['placeholder'] : '';
 
 		    $field['class']         = isset( $field['class'] ) ? $field['class'] : 'select short';
@@ -118,10 +119,16 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 		        <select id="' . esc_attr( $field['id'] ) . '" name="' . esc_attr( $field['name'] ) . '" class="wc-product-search ' . esc_attr( $field['class'] ) . '" multiple="multiple" style="width: 50%;" data-maximum-selection-length="5" data-placeholder="' . esc_attr( $field['placeholder'] ) . '"  >';
 
 		    foreach ( $field['value'] as $key => $value ) {
+
 		        $product = wc_get_product( $value );
-		        if ( is_object( $product ) ) {
-		            echo '<option value="' . esc_attr( $value ) . '"' . selected( true, true, false ) . '>' . esc_html( wp_strip_all_tags( $product->get_formatted_name() ) ) . '</option>';
-		        }
+
+                 if ( is_object( $product ) ) {
+
+		            echo '<option type="' . esc_attr($product->get_type() ) . '" value="' . esc_attr( $value ) . '"' . selected( true, true, false ) . '>' . esc_html( wp_strip_all_tags( $product->get_formatted_name() ) ) . '</option>';
+		            }
+
+		  
+
 		    }
 
 		    echo '</select> ';
@@ -271,7 +278,9 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
 					   $count++;
 
-					   } ?>
+					   } 
+
+					   ?>
 	            		
 	            	</div>
 
@@ -292,13 +301,20 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 	            		<div class="thwbt-product-list-add">
 	            			
 	            			<label>
-	            				<input id="<?php echo esc_attr($item_product->get_id());?>" name="product-checkbox[<?php echo esc_attr($item_product->get_id());?>]" value="<?php echo esc_attr($item_product->get_price());?>"type="checkbox" class="product-checkbox" data-price="<?php echo esc_attr($item_product->get_price());?>" data-product-id="<?php echo esc_attr($item_product->get_id());?>" data-product-type="<?php echo esc_attr($item_product->get_type());?>" data-product-quantity="1" <?php if($product_id === $item_product->get_id()) echo esc_attr('checked') .esc_attr(' disabled');?>>
+	            				<input id="<?php echo esc_attr($item_product->get_id());?>" name="product-checkbox[<?php echo esc_attr($item_product->get_id());?>]" value="<?php echo esc_attr($item_product->get_price());?>"type="checkbox" class="product-checkbox" data-name="<?php echo esc_attr($item_product->get_name());?>" data-price="<?php echo esc_attr($item_product->get_price());?>" data-product-id="<?php echo esc_attr($item_product->get_id());?>" data-product-type="<?php echo esc_attr($item_product->get_type());?>" data-product-quantity="1" <?php if($product_id === $item_product->get_id()) echo esc_attr('checked') .esc_attr(' disabled');?>>
 								    <span>
 									<?php echo esc_html($item_product->get_name());?>
 									</span>
 									<?php
 	            			        echo wp_kses_post($item_product->get_price_html());
-	            			         ?>
+
+	            			        if ( $item_product->is_type( 'variable' ) ) {
+
+	            			           $this->thwbt_variable_product($product);
+
+	            			         }
+
+	            			        ?>
 							</label>
 
 	            		</div>
@@ -351,10 +367,62 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
                 <input type="hidden" name="product_id" value="<?php echo esc_attr( $product->get_id() );?>">
 
-	    		<button type="submit" name="add-to-cart" value="<?php echo esc_attr( $product->get_id() );?>"  class="single_add_to_cart_button button alt thwbt-add-button"><?php echo esc_html__('Add all to cart','th-bought-together');?></button>
+	    		<button type="submit" name="add-to-cart" value="<?php echo esc_attr( $product->get_id() );?>"  class="single_add_to_cart_button button alt thwbt-add-button" <?php if('variable' === $product->get_type()) echo esc_attr('checked') .esc_attr(' disabled');?>><?php echo esc_html__('Add all to cart','th-bought-together');?>
+	    			
+	    		</button>
 	    	    </div>
 
 	    <?php }
+
+
+	    public function thwbt_variable_product($product){
+
+	    	$attributes           = $product->get_variation_attributes();
+			$available_variations = $product->get_available_variations();
+
+			if ( is_array( $attributes ) && ( count( $attributes ) > 0 ) ) { ?>
+
+             <div class="variations_form" data-product_id="<?php echo esc_attr(absint( $product->get_id() ));?>" data-product_variations="<?php echo esc_attr(htmlspecialchars( wp_json_encode( $available_variations ) ) );?>" >
+             	
+             	<div class="variations thwbt-variation">
+             		
+             	<?php foreach ( $attributes as $attribute_name => $options ) { ?>
+
+                 <div class="variation">
+
+                 <div class="select">
+				<?php
+
+			$selected = isset( $_REQUEST[ 'attribute_' . sanitize_title( $attribute_name ) ] ) ? wc_clean( stripslashes( urldecode( $_REQUEST[ 'attribute_' . sanitize_title( $attribute_name ) ] ) ) ) : $product->get_variation_default_attribute( $attribute_name );
+		wc_dropdown_variation_attribute_options( array(
+									'options'          => $options,
+									'attribute'        => $attribute_name,
+									'product'          => $product,
+									'selected'         => $selected,
+									'show_option_none' => sprintf( esc_html__( '%s', 'th-bought-together' ), wc_attribute_label( $attribute_name ) )
+									) );
+
+									?>
+                        </div>
+
+                  </div>
+
+             	<?php } ?>
+
+             	<div class="reset"><?php echo apply_filters( 'woocommerce_reset_variations_link', '<a class="reset_variations" href="#">'.esc_html__( 'Clear', 'th-bought-together' ).'</a>' ); ?>
+             	</div>
+
+             </div>
+
+
+            </div>
+
+
+
+			<?php }
+
+
+	    }
 
 
 	    public function thwbt_add_all_to_cart() {
@@ -492,5 +560,3 @@ function thwbt_main_load(){
 add_action( 'plugins_loaded', 'thwbt_main_load', 25 );
 
 endif;    
-
- 

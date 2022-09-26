@@ -104,3 +104,28 @@ letter-spacing:0.7px;
     display: flex;
     align-items: center;
 }
+
+.variations_form .variations.thwbt-variation .variation {
+    display: inline-block;
+    border-style: solid;
+    border-color: #e5e5e5;
+    padding:0;
+    margin:0.5rem 0 0 0;
+    max-width: 100%;
+    border-radius: 2px;
+}
+.variations.thwbt-variation .variation select {
+    width: 100%;
+    max-width:150px;
+    padding:6px;
+    color: #888;
+    border: 1px solid #ccc;
+    font-size: 15px;
+    line-height: 1.5em;
+    font-size: 14px;
+}
+
+.variations.thwbt-variation .reset_variations {
+margin-top: 5px;
+display: block;
+}
