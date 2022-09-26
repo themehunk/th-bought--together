@@ -52,9 +52,13 @@
 
 		_checkvalue_used : function( $wrap ) {
 
-			$wrap.each(function() {
+			  $wrap.each(function() {
 
 				var $products = $(this).find('.thwbt-products');
+
+				var $btn = $(this).find('.single_add_to_cart_button.thwbt-add-button');
+
+				var is_selection = false;
 
 				$products.find('.thwbt-product-list-add').each(function() {
 
@@ -63,8 +67,12 @@
 				var _checked = $this.find('.product-checkbox').prop('checked');
 
 				var _id = parseInt($this.find('.product-checkbox').attr('data-product-id'));
+
+				var _prd_type = $this.find('.product-checkbox').attr('data-product-type');
+
+				var _prd_name = $this.find('.product-checkbox').attr('data-name');
         
-                var $match_id = $this.closest($wrap).find('.thwbt-content-one');
+        var $match_id = $this.closest($wrap).find('.thwbt-content-one');
 			      
 
 			    if (!_checked) {
@@ -83,11 +91,30 @@
 
 			    }
 
-			    
+
+			    if (_checked && (_prd_type == 'variable')) {
+              
+              is_selection = true;
+
+			    }
+
+			    if (is_selection) {
+
+			    	$btn.attr('disabled', 'disabled');
+
+			    }else{
+
+			    	$btn.removeAttr("disabled");
+
+			    }
+
+
 			}); 
 
 
-          });
+
+
+     });
 
 
 		},
