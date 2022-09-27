@@ -127,7 +127,6 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 		            echo '<option type="' . esc_attr($product->get_type() ) . '" value="' . esc_attr( $value ) . '"' . selected( true, true, false ) . '>' . esc_html( wp_strip_all_tags( $product->get_formatted_name() ) ) . '</option>';
 		            }
 
-		  
 
 		    }
 
@@ -239,6 +238,7 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
 	            	foreach ( $data_items as $item ) {
 
+
 	                  if($count==0){
 
                        $thwbt_class ='thwbt-product thwbt-active';
@@ -259,7 +259,9 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
 							continue;
 
-						} ?>
+						} 
+
+						?>
 
 						<div <?php wc_product_class($thwbt_class, $item );?>>
 
@@ -301,14 +303,20 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 	            		<div class="thwbt-product-list-add">
 	            			
 	            			<label>
-	            				<input id="<?php echo esc_attr($item_product->get_id());?>" name="product-checkbox[<?php echo esc_attr($item_product->get_id());?>]" value="<?php echo esc_attr($item_product->get_price());?>"type="checkbox" class="product-checkbox" data-name="<?php echo esc_attr($item_product->get_name());?>" data-price="<?php echo esc_attr($item_product->get_price());?>" data-product-id="<?php echo esc_attr($item_product->get_id());?>" data-product-type="<?php echo esc_attr($item_product->get_type());?>" data-product-quantity="1" <?php if($product_id === $item_product->get_id()) echo esc_attr('checked') .esc_attr(' disabled');?>>
-								    <span>
+	            				<input id="<?php echo esc_attr($item_product->get_id());?>" name="product-checkbox[<?php echo esc_attr($item_product->get_id());?>]" value="<?php echo esc_attr($item_product->get_price());?>"type="checkbox" class="product-checkbox" data-name="<?php echo esc_attr($item_product->get_name());?>" data-price="<?php echo esc_attr($item_product->get_price());?>" data-product-id="<?php echo esc_attr($item_product->get_id());?>" data-product-type="<?php echo esc_attr($item_product->get_type());?>"
+
+	            				data-id="<?php echo esc_attr( $item_product->is_type( 'variable' ) || ! $item_product->is_in_stock() ? 0 : $product_id ); ?>"
+	            				 
+	            				data-product-quantity="1" <?php if($product_id === $item_product->get_id()) echo esc_attr('checked') .esc_attr(' disabled');?>>
+								    <span class="thwbt-product-title">
 									<?php echo esc_html($item_product->get_name());?>
 									</span>
+									<span class="thwbt-product-price">
 									<?php
-	            			        echo wp_kses_post($item_product->get_price_html());
+	            			        echo wp_kses_post($item_product->get_price_html());?>
+	            			        </span>
 
-	            			        if ( $item_product->is_type( 'variable' ) ) {
+	            			        <?php if ( $item_product->is_type( 'variable' ) ) {
 
 	            			           $this->thwbt_variable_product($product);
 
@@ -338,14 +346,30 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
             
             $product = wc_get_product($pid);
 
+            if($product->get_type()!=='variable'){
+
+              $price = $product->get_price();
+              $price_html = $product->get_price_html();
+
+            }else{
+
+               $price_html = '';
+               $price = '';
+
+            }
+
+
+
 	    	?>
 
-	    	<div class="total-price-wrapper" data-total="<?php echo esc_attr($product->get_price());?>">
+	    	<div class="total-price-wrapper" data-total="<?php echo esc_attr($price);?>">
 
 	    		<div class="total-price">
 	    			<?php
-	            	echo wp_kses_post($product->get_price_html()); 
-	            	?>	
+
+	    			echo wp_kses_post($price_html);
+ 
+	              ?>	
 	            </div>
 
 	    		<div class="total-order"><?php echo sprintf(__('For <span>%s</span> item.','th-bought-together'),'1');?></div>
@@ -367,7 +391,9 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
                 <input type="hidden" name="product_id" value="<?php echo esc_attr( $product->get_id() );?>">
 
-	    		<button type="submit" name="add-to-cart" value="<?php echo esc_attr( $product->get_id() );?>"  class="single_add_to_cart_button button alt thwbt-add-button" <?php if('variable' === $product->get_type()) echo esc_attr('checked') .esc_attr(' disabled');?>><?php echo esc_html__('Add all to cart','th-bought-together');?>
+                <input type="hidden" name="variation_id" class="variation_id" value="0">
+
+	    		<button type="submit" name="add-to-cart" value="<?php echo esc_attr( $product->get_id() );?>"  class="single_add_to_cart_button button alt thwbt-add-button" <?php if('variable' === $product->get_type()) echo esc_attr(' disabled');?>><?php echo esc_html__('Add all to cart','th-bought-together');?>
 	    			
 	    		</button>
 	    	    </div>
@@ -453,6 +479,12 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
 		$quantity       = empty( $_POST['quantity'] ) ? 1 : wc_stock_amount( wp_unslash( $_POST['quantity'] ) );
 
+		$variation_id   = $_POST['variation_id'];
+
+		$variation      = $_POST['variation'];
+
+		
+
 		foreach ( $product_ids as $product_id ) {
 		    
 		    $product_id        = apply_filters( 'woocommerce_add_to_cart_product_id', absint( $product_id ) );
@@ -463,17 +495,28 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 		        continue;
 		    }
 
+		    if( $adding_to_cart->get_type()=='simple'){
+
+		    	$variation_id   = '0';
+
+		        $variation      = 'null';
+
+
+		    }
+		    if ( $adding_to_cart && 'variation' === $adding_to_cart->get_type() ) {
+						$variation_id = $product_id;
+						$product_id   = $adding_to_cart->get_parent_id();
+
+						if ( empty( $variation ) ) {
+							$variation = $adding_to_cart->get_variation_attributes();
+						}
+					}
+            
 		    $add_to_cart_handler = apply_filters( 'woocommerce_add_to_cart_handler', $adding_to_cart->product_type, $adding_to_cart );
 
-		 
-		    if ( 'simple' !== $add_to_cart_handler ) {
+		    $passed_validation = apply_filters( 'woocommerce_add_to_cart_validation', true, $product_id, $quantity, $variation_id, $variation);
 
-		        continue;
-		    }
-
-		    $passed_validation = apply_filters( 'woocommerce_add_to_cart_validation', true, $product_id, $quantity );
-
-		    if ( $passed_validation && false !== WC()->cart->add_to_cart( $product_id, $quantity ) ) {
+		    if ( $passed_validation && false !== WC()->cart->add_to_cart( $product_id, $quantity, $variation_id, $variation) ) {
 
 		    	do_action( 'woocommerce_ajax_added_to_cart', $product_id );
 
@@ -488,13 +531,34 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
 		$product_id     = (int) apply_filters( 'woocommerce_add_to_cart_product_id', absint( $_POST['product_id'] ) );
 
-        $passed_validation = apply_filters('woocommerce_add_to_cart_validation', true, $product_id, 1);
+        $passed_validation = apply_filters('woocommerce_add_to_cart_validation', true, $product_id, $variation_id, $variation);
 
         $product        = wc_get_product( $product_id );
 
         $quantity       = empty( $_POST['quantity'] ) ? 1 : wc_stock_amount( wp_unslash( $_POST['quantity'] ) );
 
-        if($passed_validation && WC()->cart->add_to_cart($product_id, $quantity)){
+        $variation_id   = $_POST['variation_id'];
+		$variation      = $_POST['variation'];
+
+		if( $product->get_type()=='simple'){
+
+		    	$variation_id   = '0';
+
+		        $variation      = 'null';
+
+
+		    }
+		if ( $product && 'variation' === $product->get_type() ) {
+						$variation_id = $product_id;
+						$product_id   = $product->get_parent_id();
+
+						if ( empty( $variation ) ) {
+
+							$variation = $product->get_variation_attributes();
+						}
+		}
+
+        if($passed_validation && WC()->cart->add_to_cart($product_id, $quantity, $variation_id, $variation)){
 
           $data = apply_filters('add_to_cart_fragments', array());
 

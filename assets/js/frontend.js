@@ -28,6 +28,7 @@
 
          $( document ).on('click' , '.product-checkbox', ThwbtScript._thwbt_init );
          $( document ).on('click' , '.thwbt-add-button-form .single_add_to_cart_button', ThwbtScript._add_to_cart_item );
+         $( document ).on('found_variation' , ThwbtScript._variation_found );
 			
 		},
 
@@ -70,6 +71,8 @@
 
 				var _prd_type = $this.find('.product-checkbox').attr('data-product-type');
 
+				var _data_id = $this.find('.product-checkbox').attr('data-id');
+
 				var _prd_name = $this.find('.product-checkbox').attr('data-name');
         
         var $match_id = $this.closest($wrap).find('.thwbt-content-one');
@@ -92,7 +95,7 @@
 			    }
 
 
-			    if (_checked && (_prd_type == 'variable')) {
+			    if (_checked && ( _data_id == 0 )) {
               
               is_selection = true;
 
@@ -155,6 +158,8 @@
 
 		    $('.total-price').html(thwbt_optn.currency_symbol + _total);
 
+        $('.total-price-wrapper').attr('data-total',_total);
+
 		    $('.total-order span').html(_count);
 
 		    $(".thwbt-ids").attr("value",_id);
@@ -184,6 +189,13 @@
 
          $btn.addClass('loading');
 
+         $wrap.find('.thwbt-product-list-add select[name^=attribute]').each(function() {
+              var attribute = $(this).attr('name');
+              var attribute_value = $(this).val();
+              attrs[attribute] = attribute_value;
+               
+         });
+
          data.action = 'thwbt_add_all_to_cart';
 
          data.quantity = $form.find('input[name="quantity"]').val();
@@ -192,11 +204,15 @@
 
          data.thwbt_ids = $form.find('input[name="thwbt_ids"]').val();
 
+         data.variation_id = $form.find('input[name="variation_id"]').val();
+
+         data.variation = attrs;
+
          data.thwbt_nonce = thwbt_optn.nonce;
 
          $.post(thwbt_optn.ajax_url, data, function(response) {
-
-
+          
+          
           if (!response) {
             return;
           }
@@ -219,6 +235,89 @@
                   [response.fragments, response.cart_hash, $btn]);
         });
              
+       },
+
+       /************************/
+      // add variation product
+      /************************/
+
+      _variation_found : function( event, variation ) {
+
+          var $wrap = $(event['target']).closest('.thwbt-product-wrap');
+          var $products = $(event['target']).closest('.thwbt-product-list-add');
+          var $product =  $products.find('.product-checkbox');
+          var $p_id = $(event['target']).closest('.variations_form').attr('data-product_id');
+          var $vartn_id = variation.variation_id;
+          var $vartn_price = parseFloat(variation.display_price);
+          var $vartn_price_html = variation.price_html;
+
+          if(variation.variation_id && variation.is_purchasable && variation.is_in_stock){
+
+          $wrap.find('.thwbt-add-button').removeAttr("disabled");
+          $wrap.find('input[name^="variation_id"]').attr('value', $vartn_id);
+          
+          $product.attr('data-price', $vartn_price);
+          $product.attr('value', $vartn_price);
+          $product.attr('data-id', $vartn_id);
+
+          var _sbtotal = parseFloat($('.total-price-wrapper').attr('data-total'));
+          
+          if(_sbtotal){
+
+            var _total   =  $vartn_price + _sbtotal;
+
+          }else{
+
+            var _total   =  $vartn_price;
+
+          }
+          
+
+          $products.find('.thwbt-product-price').html($vartn_price_html);
+
+          $wrap.find('.total-price').html(thwbt_optn.currency_symbol + _total);
+
+          var attrs = {};
+
+          $products.find('select[name^="attribute_"]').each(function() {
+
+          var attr_name = $(this).attr('name');
+
+          attrs[attr_name] = $(this).val();
+
+
+          });
+
+          $product.attr('data-attrs', JSON.stringify(attrs));
+
+          // change image
+
+          $wrap.find('.thwbt-product').each(function() {
+
+           if (variation['image']['url']){
+
+          	var $find_img = $wrap.find('.post-' + $p_id);
+
+          	var $img = $find_img.find('.image img');
+
+          	  $img.attr('src', variation['image']['url']);
+
+			      }
+
+			    });
+
+
+          }else{
+
+            $wrap.find('.thwbt-add-button').attr('disabled', 'disabled');
+            $wrap.find('input[name^="variation_id"]').attr('value', '');
+            $product.attr('data-id', '0');
+            $('.total-price-wrapper').attr('data-total','');
+
+          }
+
+
+
        }
 
 	};
