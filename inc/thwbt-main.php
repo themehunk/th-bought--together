@@ -346,14 +346,30 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
             
             $product = wc_get_product($pid);
 
+            if($product->get_type()!=='variable'){
+
+              $price = $product->get_price();
+              $price_html = $product->get_price_html();
+
+            }else{
+
+               $price_html = '';
+               $price = '';
+
+            }
+
+
+
 	    	?>
 
-	    	<div class="total-price-wrapper" data-total="<?php echo esc_attr($product->get_price());?>">
+	    	<div class="total-price-wrapper" data-total="<?php echo esc_attr($price);?>">
 
 	    		<div class="total-price">
 	    			<?php
-	            	echo wp_kses_post($product->get_price_html()); 
-	            	?>	
+
+	    			echo wp_kses_post($price_html);
+ 
+	              ?>	
 	            </div>
 
 	    		<div class="total-order"><?php echo sprintf(__('For <span>%s</span> item.','th-bought-together'),'1');?></div>
@@ -537,7 +553,7 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 						$product_id   = $product->get_parent_id();
 
 						if ( empty( $variation ) ) {
-							
+
 							$variation = $product->get_variation_attributes();
 						}
 		}

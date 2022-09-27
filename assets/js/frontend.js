@@ -158,6 +158,8 @@
 
 		    $('.total-price').html(thwbt_optn.currency_symbol + _total);
 
+        $('.total-price-wrapper').attr('data-total',_total);
+
 		    $('.total-order span').html(_count);
 
 		    $(".thwbt-ids").attr("value",_id);
@@ -246,7 +248,7 @@
           var $product =  $products.find('.product-checkbox');
           var $p_id = $(event['target']).closest('.variations_form').attr('data-product_id');
           var $vartn_id = variation.variation_id;
-          var $vartn_price = variation.display_price;
+          var $vartn_price = parseFloat(variation.display_price);
           var $vartn_price_html = variation.price_html;
 
           if(variation.variation_id && variation.is_purchasable && variation.is_in_stock){
@@ -258,8 +260,22 @@
           $product.attr('value', $vartn_price);
           $product.attr('data-id', $vartn_id);
 
+          var _sbtotal = parseFloat($('.total-price-wrapper').attr('data-total'));
+          
+          if(_sbtotal){
+
+            var _total   =  $vartn_price + _sbtotal;
+
+          }else{
+
+            var _total   =  $vartn_price;
+
+          }
+          
+
           $products.find('.thwbt-product-price').html($vartn_price_html);
-          $wrap.find('.total-price').html($vartn_price_html);
+
+          $wrap.find('.total-price').html(thwbt_optn.currency_symbol + _total);
 
           var attrs = {};
 
@@ -269,13 +285,14 @@
 
           attrs[attr_name] = $(this).val();
 
+
           });
 
-            $product.attr('data-attrs', JSON.stringify(attrs));
+          $product.attr('data-attrs', JSON.stringify(attrs));
 
-            // change image
+          // change image
 
-            $wrap.find('.thwbt-product').each(function() {
+          $wrap.find('.thwbt-product').each(function() {
 
            if (variation['image']['url']){
 
@@ -295,6 +312,7 @@
             $wrap.find('.thwbt-add-button').attr('disabled', 'disabled');
             $wrap.find('input[name^="variation_id"]').attr('value', '');
             $product.attr('data-id', '0');
+            $('.total-price-wrapper').attr('data-total','');
 
           }
 
