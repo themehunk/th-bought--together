@@ -129,3 +129,9 @@ letter-spacing:0.7px;
 margin-top: 5px;
 display: block;
 }
+
+.thwbt-product-wrap .thwbt-products .thwbt-product-price span.price{
+font-size:14px;
+color:#111;
+font-weight:normal;
+}
