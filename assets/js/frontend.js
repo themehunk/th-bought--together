@@ -187,11 +187,11 @@
 
          $btn.addClass('loading');
 
-         $wrap.find('.product-checkbox select[name^=attribute]').
-            each(function() {
+         $wrap.find('.thwbt-product-list-add select[name^=attribute]').each(function() {
               var attribute = $(this).attr('name');
               var attribute_value = $(this).val();
               attrs[attribute] = attribute_value;
+               
          });
 
          data.action = 'thwbt_add_all_to_cart';
@@ -209,8 +209,8 @@
          data.thwbt_nonce = thwbt_optn.nonce;
 
          $.post(thwbt_optn.ajax_url, data, function(response) {
-
-
+          
+          
           if (!response) {
             return;
           }

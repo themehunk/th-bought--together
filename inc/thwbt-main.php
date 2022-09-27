@@ -463,6 +463,12 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
 		$quantity       = empty( $_POST['quantity'] ) ? 1 : wc_stock_amount( wp_unslash( $_POST['quantity'] ) );
 
+		$variation_id   = $_POST['variation_id'];
+
+		$variation      = $_POST['variation'];
+
+		
+
 		foreach ( $product_ids as $product_id ) {
 		    
 		    $product_id        = apply_filters( 'woocommerce_add_to_cart_product_id', absint( $product_id ) );
@@ -473,17 +479,28 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 		        continue;
 		    }
 
+		    if( $adding_to_cart->get_type()=='simple'){
+
+		    	$variation_id   = '0';
+
+		        $variation      = 'null';
+
+
+		    }
+		    if ( $adding_to_cart && 'variation' === $adding_to_cart->get_type() ) {
+						$variation_id = $product_id;
+						$product_id   = $adding_to_cart->get_parent_id();
+
+						if ( empty( $variation ) ) {
+							$variation = $adding_to_cart->get_variation_attributes();
+						}
+					}
+            
 		    $add_to_cart_handler = apply_filters( 'woocommerce_add_to_cart_handler', $adding_to_cart->product_type, $adding_to_cart );
 
-		 
-		    if ( 'simple' !== $add_to_cart_handler ) {
+		    $passed_validation = apply_filters( 'woocommerce_add_to_cart_validation', true, $product_id, $quantity, $variation_id, $variation);
 
-		        continue;
-		    }
-
-		    $passed_validation = apply_filters( 'woocommerce_add_to_cart_validation', true, $product_id, $quantity );
-
-		    if ( $passed_validation && false !== WC()->cart->add_to_cart( $product_id, $quantity ) ) {
+		    if ( $passed_validation && false !== WC()->cart->add_to_cart( $product_id, $quantity, $variation_id, $variation) ) {
 
 		    	do_action( 'woocommerce_ajax_added_to_cart', $product_id );
 
@@ -507,11 +524,20 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
         $variation_id   = $_POST['variation_id'];
 		$variation      = $_POST['variation'];
 
+		if( $product->get_type()=='simple'){
+
+		    	$variation_id   = '0';
+
+		        $variation      = 'null';
+
+
+		    }
 		if ( $product && 'variation' === $product->get_type() ) {
 						$variation_id = $product_id;
 						$product_id   = $product->get_parent_id();
 
 						if ( empty( $variation ) ) {
+							
 							$variation = $product->get_variation_attributes();
 						}
 		}
