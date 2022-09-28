@@ -72,13 +72,22 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 	    <?php }
 
 	   
-	    public function thwbt_choose_product($pid){ ?>
+	    public function thwbt_choose_product($pid){ 
+
+	    	global $post, $product_object;
+
+            if ( ! is_a( $product_object, 'WC_Product' ) ) {
+                  $product_object = wc_get_product( $pid );
+               }
+	    	?>
 
 	    	<div id='thwbt_tab_settings' class='panel woocommerce_options_panel thwbt_option'>
     
             <?php 
 
             $data = get_post_meta($pid, '_thwbt_product_ids', true );
+
+            $values = $product_object->get_meta('thwbt_checked_default_product');
 
 		    // Add field via custom function
 
@@ -95,20 +104,15 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 		        )
 		    );
 
-		    ?>
-                          
-                          <p class="form-field thwbt_product_ids_field thwbt-default-check-single">
+			woocommerce_wp_checkbox( array(
+	        'id'            => 'thwbt_checked_default_product',
+	        'value'         => empty($values) ? 'yes' : $values, 
+	        'label'         => __( 'Choose Default Product', 'th-bought-together' ),
+	        'description'   => __( 'Description', 'th-bought-together' ),
+	         ) );
 
-                          	
-
-                            <input id="thwbt_checked_default_product" name="thwbt_checked_default_product"
-                                           type="checkbox" <?php echo esc_attr( get_post_meta( $pid, '_thwbt_checked_default_product', true ) === 'on' ? 'checked' : '' ); ?>/>
-                            <label for="thwbt_checked_default_product"><?php esc_html_e( 'Choose Default Single Product', 'th-bought-together' ); ?>	
-                          	</label>
-                            </p>
-                                    
-                             
-    
+		 ?>
+                               
            </div>
 
 	   <?php  }
@@ -167,11 +171,9 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 		    // Update
 		    $product->update_meta_data( '_thwbt_product_ids', array_map( 'esc_attr', $data ) );
 
-		    if ( isset( $_POST['thwbt_checked_default_product'] ) ) {
+		    $product->update_meta_data( 'thwbt_checked_default_product', isset($_POST['thwbt_checked_default_product']) ? 'yes' : 'no' );
 
-		    $product->update_meta_data( '_thwbt_checked_default_product',$_POST['thwbt_checked_default_product'] );
-
-		    }
+		    
 		}
 
         //create shortcode
