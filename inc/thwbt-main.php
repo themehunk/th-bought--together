@@ -76,7 +76,9 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
 	    	<div id='thwbt_tab_settings' class='panel woocommerce_options_panel thwbt_option'>
     
-           <?php $data = get_post_meta($pid, '_thwbt_product_ids', true );
+            <?php 
+
+            $data = get_post_meta($pid, '_thwbt_product_ids', true );
 
 		    // Add field via custom function
 
@@ -94,6 +96,18 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 		    );
 
 		    ?>
+                          
+                          <p class="form-field thwbt_product_ids_field thwbt-default-check-single">
+
+                          	
+
+                            <input id="thwbt_checked_default_product" name="thwbt_checked_default_product"
+                                           type="checkbox" <?php echo esc_attr( get_post_meta( $pid, '_thwbt_checked_default_product', true ) === 'on' ? 'checked' : '' ); ?>/>
+                            <label for="thwbt_checked_default_product"><?php esc_html_e( 'Choose Default Single Product', 'th-bought-together' ); ?>	
+                          	</label>
+                            </p>
+                                    
+                             
     
            </div>
 
@@ -152,6 +166,12 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
 		    // Update
 		    $product->update_meta_data( '_thwbt_product_ids', array_map( 'esc_attr', $data ) );
+
+		    if ( isset( $_POST['thwbt_checked_default_product'] ) ) {
+
+		    $product->update_meta_data( '_thwbt_checked_default_product',$_POST['thwbt_checked_default_product'] );
+
+		    }
 		}
 
         //create shortcode

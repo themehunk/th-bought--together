@@ -29,6 +29,7 @@
          $( document ).on('click' , '.product-checkbox', ThwbtScript._thwbt_init );
          $( document ).on('click' , '.thwbt-add-button-form .single_add_to_cart_button', ThwbtScript._add_to_cart_item );
          $( document ).on('found_variation' , ThwbtScript._variation_found );
+         $( document ).on('reset_data' , ThwbtScript._reset_data );
 			
 		},
 
@@ -318,7 +319,9 @@
 
 
 
-       }
+       },
+
+
 
 	};
 
