@@ -260,6 +260,7 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
 	            	foreach ( $data_items as $item ) {
 
+                      
 
 	                  if($count==0){
 
@@ -271,9 +272,14 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
 	                  	$thwbt_class='thwbt-product thwbt-inactive';
 
-	                  	
 
 	                  }
+
+	                  if($product->get_meta('thwbt_checked_default_product')=='yes'){
+
+                        $thwbt_class='thwbt-product thwbt-active';
+
+                      }
 
                       $item_product = wc_get_product( $item );
 
@@ -329,7 +335,7 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
 	            				data-id="<?php echo esc_attr( $item_product->is_type( 'variable' ) || ! $item_product->is_in_stock() ? 0 : $product_id ); ?>"
 	            				 
-	            				data-product-quantity="1" <?php if($product_id === $item_product->get_id()) echo esc_attr('checked') .esc_attr(' disabled');?>>
+	            				data-product-quantity="1" <?php if($product_id === $item_product->get_id()) echo esc_attr('checked') .esc_attr(' disabled');?>  <?php if($product->get_meta('thwbt_checked_default_product')=='yes') echo esc_attr('checked');?>>
 								    <span class="thwbt-product-title">
 									<?php echo esc_html($item_product->get_name());?>
 									</span>
