@@ -3,11 +3,11 @@
  * Plugin Name: TH Frequently Bought Together for WooCommerce
  * Plugin URI: https://themehunk.com
  * Description: Increase your sales with personalized product recommendations.             
- * Version: 1.1.4
+ * Version: 1.0.0
  * Author:ThemeHunk
  * Author URI:https://themehunk.com
  * Requires at least: 5.0
- * Tested up to: 6.0.1
+ * Tested up to: 6.0.2
  * WC requires at least: 3.0
  * WC tested up to: 6.8
  * Domain Path:/languages

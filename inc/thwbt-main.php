@@ -39,13 +39,15 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 		//Enqueue frontend scripts
 		add_action( 'wp_enqueue_scripts', array( $this, 'thwbt_frond_enqueue_scripts' ) );
 		
-
 		//show 
         add_action( 'woocommerce_after_single_product_summary', array( $this, 'thwbt_show_shortcode' ) );
 
         //added product to cart
         add_action( 'wp_ajax_thwbt_add_all_to_cart',array( $this, 'thwbt_add_all_to_cart' ) );
 		add_action( 'wp_ajax_nopriv_thwbt_add_all_to_cart', array( $this, 'thwbt_add_all_to_cart' ) );
+		
+       //product search
+		add_action( 'wp_ajax_get_search_product_ajax_callback', array( $this, 'get_search_product_ajax_callback' ));
 
         }
 
@@ -106,17 +108,16 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
 			woocommerce_wp_checkbox( array(
 	        'id'            => 'thwbt_checked_default_product',
-	        'value'         => empty($values) ? 'yes' : $values, 
+	        'value'         => empty($values) ? '' : $values, 
 	        'label'         => __( 'Choose Default Product', 'th-bought-together' ),
-	        'description'   => __( 'Description', 'th-bought-together' ),
+	        'description'   => __( 'By Default Choose Bought Togther Product', 'th-bought-together' ),
 	         ) );
 
 		 ?>
-                               
+                 
            </div>
 
 	   <?php  }
-
 
 	   public function thwbt_woocommerce_wp_product_select2( $field ) {
 
@@ -138,13 +139,11 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 
 		    foreach ( $field['value'] as $key => $value ) {
 
-		        $product = wc_get_product( $value );
+		    	    $title = get_the_title( $value );
 
-                 if ( is_object( $product ) ) {
+                    $title = ( mb_strlen( $title ) > 50 ) ? mb_substr( $title, 0, 49 ) . '...' : $title;
 
-		            echo '<option type="' . esc_attr($product->get_type() ) . '" value="' . esc_attr( $value ) . '"' . selected( true, true, false ) . '>' . esc_html( wp_strip_all_tags( $product->get_formatted_name() ) ) . '</option>';
-		            }
-
+		            echo '<option value="' . esc_attr( $value ) . '"' . selected( true, true, false ) . '>' . esc_html($title) . '</option>';
 
 		    }
 
@@ -161,6 +160,86 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 		    echo '</p>';
 		}
 
+
+		public function get_search_product_ajax_callback(){
+
+			$return = array();
+
+			$arg = array( 
+				's'=> $_GET['q'],
+				'post_status' => 'publish',
+				'ignore_sticky_posts' => 1,
+				'post_type' =>  array('product'),
+			    ); 
+
+			$args['tax_query'] = $this->getTaxQuery();
+
+			$search_results = new WP_Query($arg);
+
+			if( $search_results->have_posts() ) :
+
+				while( $search_results->have_posts() ) : 
+
+                    $search_results->the_post();
+
+                    $product = wc_get_product($search_results->post->ID);
+
+                    if($product->is_type('simple')):
+
+					$title = ( mb_strlen( $product->get_name()) > 50 ) ? mb_substr( $product->get_name(), 0, 49 ) . '...' : $product->get_name();
+
+					$return[] = array( $product->get_id(), $title );
+
+				    endif;
+
+				endwhile;
+
+			endif;
+
+			echo json_encode( $return );
+
+			die;
+
+		}
+
+	/**
+     * Get tax query
+     *
+     * return array
+     */
+     public function getTaxQuery(){
+
+        $product_visibility_term_ids = wc_get_product_visibility_term_ids();
+
+        $tax_query = array(
+
+            'relation' => 'AND',
+        );
+
+        $tax_query[] = array(
+
+            'taxonomy' => 'product_visibility',
+            'field'    => 'term_taxonomy_id',
+            'terms'    => $product_visibility_term_ids['exclude-from-search'],
+            'operator' => 'NOT IN',
+        );
+
+        // Exclude out of stock products from suggestions
+
+        if (get_option('woocommerce_hide_out_of_stock_items')=='yes') {
+
+            $tax_query[] = array(
+
+                'taxonomy' => 'product_visibility',
+                'field'    => 'term_taxonomy_id',
+                'terms'    => $product_visibility_term_ids['outofstock'],
+                'operator' => 'NOT IN',
+            );
+        }
+
+        return $tax_query;
+
+       }
 
 		// Save
 
@@ -331,7 +410,11 @@ if ( ! class_exists( 'Thwbt_Main' ) ):
 	            		<div class="thwbt-product-list-add">
 	            			
 	            			<label>
-	            				<input id="<?php echo esc_attr($item_product->get_id());?>" name="product-checkbox[<?php echo esc_attr($item_product->get_id());?>]" value="<?php echo esc_attr($item_product->get_price());?>"type="checkbox" class="product-checkbox" data-name="<?php echo esc_attr($item_product->get_name());?>" data-price="<?php echo esc_attr($item_product->get_price());?>" data-product-id="<?php echo esc_attr($item_product->get_id());?>" data-product-type="<?php echo esc_attr($item_product->get_type());?>"
+	            				<input id="<?php echo esc_attr($item_product->get_id());?>" name="product-checkbox[<?php echo esc_attr($item_product->get_id());?>]" value="<?php echo esc_attr( $item_product->is_type( 'variable' ) || ! $item_product->is_in_stock() ? '' : $item_product->get_price() ); ?>"type="checkbox" class="product-checkbox" data-name="<?php echo esc_attr($item_product->get_name());?>" 
+
+	            				data-price="<?php echo esc_attr( $item_product->is_type( 'variable' ) || ! $item_product->is_in_stock() ? '' : $item_product->get_price() ); ?>" data-product-id="<?php echo esc_attr($item_product->get_id());?>" 
+
+	            				data-product-type="<?php echo esc_attr($item_product->get_type());?>"
 
 	            				data-id="<?php echo esc_attr( $item_product->is_type( 'variable' ) || ! $item_product->is_in_stock() ? 0 : $product_id ); ?>"
 	            				 

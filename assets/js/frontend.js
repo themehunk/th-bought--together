@@ -24,14 +24,14 @@
 		 */
 
 		_bind: function()
-		{
+		 {
 
-         $( document ).bind('load click' , '.product-checkbox', ThwbtScript._thwbt_init );
+         $( document ).bind('click init' , '.product-checkbox', ThwbtScript._thwbt_init ).trigger('init');
          $( document ).on('click' , '.thwbt-add-button-form .single_add_to_cart_button', ThwbtScript._add_to_cart_item );
          $( document ).on('found_variation' , ThwbtScript._variation_found );
          $( document ).on('reset_data' , ThwbtScript._reset_data );
 			
-		},
+		 },
 
        /*************/
       // Main Init
@@ -157,7 +157,11 @@
 		        }
 		    }
 
-		    $('.total-price').html(thwbt_optn.currency_symbol + _total);
+        if(!isNaN(_total)){
+
+        $('.total-price').html(thwbt_optn.currency_symbol + _total);
+
+        }
 
         $('.total-price-wrapper').attr('data-total',_total);
 
